@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name        Wawa Downloader
 // @namespace   Violentmonkey Scripts
-// @match       https://www.wawacity.*/
+// @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.4
+// @version     0.5
 // @author      mctypon
 // @description Batch download links from Wawa movies, shows and animes sections.
 // @icon        https://www.wawacity.fit/favicon32.png
