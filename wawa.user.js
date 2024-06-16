@@ -3,8 +3,8 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/
 // @grant       none
-// @version     0.2
-// @author      Mctypon
+// @version     0.3
+// @author      mctypon
 // @description Batch download links from Wawa movies, shows and animes sections.
 // @icon        https://www.wawacity.fit/favicon32.png
 // ==/UserScript==
