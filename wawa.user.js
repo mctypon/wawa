@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.5
+// @version     0.6
 // @author      mctypon
 // @description Batch download links from Wawa movies, shows and animes sections.
 // @icon        https://www.wawacity.fit/favicon32.png
@@ -17,7 +17,7 @@
     button.style.position = "fixed";
     button.style.top = "10px";
     button.style.right = "10px";
-    button.style.zIndex = "1000";
+    button.style.zIndex = "10000";
     button.style.padding = "8px 16px";
     button.style.fontSize = "14px";
     button.style.color = "#fff";
