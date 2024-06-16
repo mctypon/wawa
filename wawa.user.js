@@ -3,10 +3,11 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/
 // @grant       none
-// @version     0.3
+// @version     0.4
 // @author      mctypon
 // @description Batch download links from Wawa movies, shows and animes sections.
 // @icon        https://www.wawacity.fit/favicon32.png
+// @updateURL   https://raw.githubusercontent.com/mctypon/wawa/main/wawa.user.js
 // ==/UserScript==
 (function() {
     var button = document.createElement("button");
