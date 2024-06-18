@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.6
+// @version     0.7
 // @author      mctypon
 // @description Batch download links from Wawa movies, shows and animes sections.
 // @icon        https://www.wawacity.fit/favicon32.png
@@ -76,7 +76,8 @@
                         let link = button.getAttribute('data-href');
                         if (link && link.includes('dl-protect')) {
                             button.click();
-                            await sleep(5000);
+                            let wait = Math.floor(Math.random() * 6) + 5;
+                            await sleep(wait*1000);
                         }
 
                         button = movieTd.querySelector('button.btn-copy-clipboard');
@@ -133,7 +134,8 @@
                         let link = button.getAttribute('data-href');
                         if (link && link.includes('dl-protect')) {
                             button.click();
-                            await sleep(5000);
+                            let wait = Math.floor(Math.random() * 6) + 5;
+                            await sleep(wait*1000);
                         }
                     }
                 }
