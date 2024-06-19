@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.1
+// @version     0.2
 // @author      mctypon
 // @description Batch download & upload links from Wawa movies, shows and animes sections.
 // @icon        https://www.wawacity.fit/favicon32.png
@@ -11,6 +11,9 @@
 // @updateURL   https://raw.githubusercontent.com/mctypon/wawa/main/wawa-plus.user.js
 // ==/UserScript==
 (function() {
+    // URL server
+    var targetUrl = 'https://YOUR-SERVER-URL.COM/';
+
     /* UI */
     // Download Button
     var downloadButton = document.createElement("button");
@@ -110,12 +113,8 @@
             await sleep(wait * 1000);
         }
     }
-
-     /* Upload */
-    // URL server
-    var targetUrl = 'https://YOUR-SERVER-URL.COM/';
-
-    // Send data using POST request
+    
+    // Uploader
     function postData(entry,route) {
         const data = {
             content: entry
@@ -213,14 +212,16 @@
     
             let links = {};
             let index = 1;
-            let episodes = [];
             for (const episodeLink of episodeLinks) {
-                const button = episodeLink.querySelector("button");
-                const link = getLink(button);
-                if (link) {
-                    episodes.push(index);
-                    links[index++] = link;
-                } else {
+                const button = episodeLink.querySelector(".btn-copy-clipboard");
+                if(button){
+                    const link = getLink(button);
+                    if (link) {
+                        links[index++] = link;
+                    } else {
+                        index++;
+                    }
+                }else{
                     index++;
                 }
             }
@@ -229,7 +230,7 @@
             const output = `CAT;TITLE;SAISON;URLS\n${type};${title};${season};${formattedLinks}`;
             console.log(output);
     
-            downloadFile(`${title} S${season} E${episodes[0]}-${episodes[episodes.length - 1]}.txt`, output);
+            downloadFile(`${title} S${season}.txt`, output);
         }
     }
     
