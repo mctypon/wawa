@@ -7,7 +7,7 @@
 // @author      mctypon
 // @description Batch download 1fichier links from Wawa movies, shows and animes sections in a vstream compatible format.
 // @icon        https://www.wawacity.tokyo/favicon32.png
-// @updateURL   https://raw.githubusercontent.com/mctypon/wawa/main/wawa-plus.user.js
+// @updateURL   https://raw.githubusercontent.com/mctypon/wawa/main/wawa.user.js
 // ==/UserScript==
 (function() {
     'use strict';
