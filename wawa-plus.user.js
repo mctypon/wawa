@@ -6,7 +6,7 @@
 // @version     0.3
 // @author      mctypon
 // @description Batch download & upload 1fichier links from Wawa movies, shows and animes sections in a vstream compatible format.
-// @icon        https://www.wawacity.fit/favicon32.png
+// @icon        https://www.wawacity.tokyo/favicon32.png
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
