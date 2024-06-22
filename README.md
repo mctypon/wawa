@@ -1,2 +1,2 @@
 # Wawa Script
-Batch download links from wawa
+Batch download and upload links from wawa in vstream format.
