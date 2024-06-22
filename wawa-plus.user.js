@@ -3,17 +3,17 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.2
+// @version     0.3
 // @author      mctypon
-// @description Batch download & upload links from Wawa movies, shows and animes sections.
+// @description Batch download & upload 1fichier links from Wawa movies, shows and animes sections in a vstream compatible format.
 // @icon        https://www.wawacity.fit/favicon32.png
+// @grant       GM_getValue
+// @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
 // @updateURL   https://raw.githubusercontent.com/mctypon/wawa/main/wawa-plus.user.js
 // ==/UserScript==
 (function() {
-    // URL server
-    var targetUrl = 'https://YOUR-SERVER-URL.COM/';
-
+    'use strict';
     /* UI */
     // Download Button
     var downloadButton = document.createElement("button");
@@ -115,7 +115,7 @@
     }
     
     // Uploader
-    function postData(entry,route) {
+    function postData(entry,targetUrl,route) {
         const data = {
             content: entry
         };
@@ -138,7 +138,15 @@
             }
         });
     }
-    
+    // Server data
+    function getTargetUrl() {
+        return GM_getValue('targetUrl');
+    }
+
+    function setTargetUrl(newUrl) {
+        GM_setValue('targetUrl', newUrl);
+    }
+
     /* Main */
     async function clickLinks() {
         const table = document.getElementById('DDLLinks');
@@ -235,6 +243,22 @@
     }
     
     function extractLinks() {
+        // Server URL
+        let targetUrl = getTargetUrl();
+        if (!targetUrl) {
+            const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+            targetUrl = prompt('Enter the target URL for uploads:', '');
+            if (urlPattern.test(targetUrl)) {
+                if (!targetUrl.endsWith('/')) {
+                    targetUrl += '/';
+                }
+                setTargetUrl(targetUrl);
+            } else {
+                alert('Target URL is required for uploading. Please set it through the prompt.');
+                return;
+            }
+        }
+        // Extract Links
         const table = document.getElementById('DDLLinks');
         if (!table) {
             console.error('Table with id "DDLLinks" not found.');
@@ -264,7 +288,7 @@
                         const link = getLink(button);
                         const output = `${type};${title};;"${link}"`;
                         console.log(output);
-                        postData(output,type);
+                        postData(output,targetUrl,type);
                     }else{
                         alert("Click Download button first !");
                     }
@@ -303,7 +327,7 @@
                 const formattedLinks = JSON.stringify(links);
                 const output = `${type};${title};${season};${formattedLinks}`;
                 console.log(output);
-                postData(output,type);
+                postData(output,targetUrl,type);
             }else{
                 alert("Click on Download button first !")
             }
@@ -311,7 +335,7 @@
         }
     }
 
-    // Add event listeners to buttons
+    // Event listeners
     downloadButton.addEventListener("click", clickLinks);
     uploadButton.addEventListener("click", extractLinks);
 })();
