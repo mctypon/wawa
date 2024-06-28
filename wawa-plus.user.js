@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.3.9
+// @version     0.3.99
 // @author      mctypon
 // @description Batch download & upload 1fichier links from Wawa movies, shows and animes sections in a vstream compatible format.
 // @icon        https://www.wawacity.tokyo/favicon32.png
