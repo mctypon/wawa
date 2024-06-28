@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.3.99
+// @version     0.3.999
 // @author      mctypon
 // @description Batch download & upload 1fichier links from Wawa movies, shows and animes sections in a vstream compatible format.
 // @icon        https://www.wawacity.tokyo/favicon32.png
@@ -181,13 +181,13 @@
     // GetData
     function GetData(targetUrl,type, title, season) {
         // Construct the query parameters
-        var params = `type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}`;
+        var params = `${type}=${encodeURIComponent(title)}`;
         if (season) {
-            params += `&season=${encodeURIComponent(season)}`;
+            params += `&s=${encodeURIComponent(season)}`;
         }
     
         // Full URL with query parameters
-        var url = `${targetUrl}?${params}`;
+        var url = `${targetUrl}/check?${params}`;
     
         GM_xmlhttpRequest({
             method: 'GET',
