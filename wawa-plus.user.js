@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.3
+// @version     0.3.9
 // @author      mctypon
 // @description Batch download & upload 1fichier links from Wawa movies, shows and animes sections in a vstream compatible format.
 // @icon        https://www.wawacity.tokyo/favicon32.png
@@ -77,6 +77,38 @@
     });
 
     document.body.appendChild(uploadButton);
+
+    // Check button
+    var checkButton = document.createElement("button");
+    checkButton.innerHTML = "Check";
+
+    // Check button style
+    checkButton.style.position = "fixed";
+    checkButton.style.top = "90px";
+    checkButton.style.right = "10px";
+    checkButton.style.zIndex = "10000";
+    checkButton.style.padding = "8px 16px";
+    checkButton.style.fontSize = "14px";
+    checkButton.style.color = "#fff";
+    checkButton.style.backgroundColor = "#ffc107"; // Yellow color
+    checkButton.style.border = "none";
+    checkButton.style.borderRadius = "5px";
+    checkButton.style.cursor = "pointer";
+    checkButton.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+    checkButton.style.transition = "background-color 0.3s, box-shadow 0.3s";
+
+    // Hover effect for Check button
+    checkButton.addEventListener("mouseover", function() {
+        checkButton.style.backgroundColor = "#e0a800"; // Darker yellow color on hover
+        checkButton.style.boxShadow = "0 6px 8px rgba(0, 0, 0, 0.15)";
+    });
+
+    checkButton.addEventListener("mouseout", function() {
+        checkButton.style.backgroundColor = "#ffc107";
+        checkButton.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+    });
+
+    document.body.appendChild(checkButton);
 
     /* Helpers */
     function sleep(ms) {
@@ -335,7 +367,12 @@
         }
     }
 
+    // Check Links
+    function checkLinks() {
+        console.log("Check button clicked");
+    }
     // Event listeners
     downloadButton.addEventListener("click", clickLinks);
     uploadButton.addEventListener("click", extractLinks);
+    checkButton.addEventListener("click", checkLinks);
 })();
