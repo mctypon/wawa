@@ -178,6 +178,35 @@
     function setTargetUrl(newUrl) {
         GM_setValue('targetUrl', newUrl);
     }
+    // GetData
+    function GetData(targetUrl,type, title, season) {
+        // Construct the query parameters
+        var params = `type=${encodeURIComponent(type)}&title=${encodeURIComponent(title)}`;
+        if (season) {
+            params += `&season=${encodeURIComponent(season)}`;
+        }
+    
+        // Full URL with query parameters
+        var url = `${targetUrl}?${params}`;
+    
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: url,
+            onload: function(response) {
+                if (response.status === 200) {
+                    // Successfully received response
+                    alert('Data: ' + response.responseText);
+                } else {
+                    // Handle error response
+                    alert('Error: ' + response.status + ' ' + response.statusText);
+                }
+            },
+            onerror: function(error) {
+                // Handle request error
+                alert('Request failed: ' + error);
+            }
+        });
+    }
 
     /* Main */
     async function clickLinks() {
@@ -369,8 +398,52 @@
 
     // Check Links
     function checkLinks() {
-        console.log("Check button clicked");
+        // Server URL
+        let targetUrl = getTargetUrl();
+        if (!targetUrl) {
+            const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+            targetUrl = prompt('Enter the target URL for uploads:', '');
+            if (urlPattern.test(targetUrl)) {
+                if (!targetUrl.endsWith('/')) {
+                    targetUrl += '/';
+                }
+                setTargetUrl(targetUrl);
+            } else {
+                alert('Target URL is required for uploading. Please set it through the prompt.');
+                return;
+            }
+        }
+        // Extract Links
+        const table = document.getElementById('DDLLinks');
+        if (!table) {
+            console.error('Table with id "DDLLinks" not found.');
+            return;
+        }
+    
+        const titleSpan = document.querySelector('h1.wa-block-title > span:nth-child(1)');
+        if (!titleSpan) {
+            console.error('Title span not found.');
+            return;
+        }
+    
+        const titleText = titleSpan.textContent.trim();
+        const [category, fullTitle] = titleText.split(' » ');
+        const type = category.toLowerCase() === 'animés' ? 'a' : category.toLowerCase() === 'films' ? 'm' : 't';
+    
+        if (type === "m") {
+            const title = fullTitle.split('[')[0].trim();
+            GetData(targetUrl,type, title);
+            
+        } else {
+            const title = fullTitle.split(' - ')[0].trim();
+            const seasonElement = document.querySelector('.detail-list > li:nth-child(3) > b:nth-child(2)');
+            const season = seasonElement ? seasonElement.textContent.trim() : 'Unknown';
+            GetData(targetUrl,type,title,season);
+           
+            
+        }
     }
+
     // Event listeners
     downloadButton.addEventListener("click", clickLinks);
     uploadButton.addEventListener("click", extractLinks);
