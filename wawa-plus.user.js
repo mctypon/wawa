@@ -146,7 +146,16 @@
         }
     }
     
-    // Uploader
+    // Server data
+    function getTargetUrl() {
+        return GM_getValue('targetUrl');
+    }
+
+    function setTargetUrl(newUrl) {
+        GM_setValue('targetUrl', newUrl);
+    }
+
+    // postData
     function postData(entry,targetUrl,route) {
         const data = {
             content: entry
@@ -170,23 +179,12 @@
             }
         });
     }
-    // Server data
-    function getTargetUrl() {
-        return GM_getValue('targetUrl');
-    }
-
-    function setTargetUrl(newUrl) {
-        GM_setValue('targetUrl', newUrl);
-    }
     // GetData
     function GetData(targetUrl,type, title, season) {
-        // Construct the query parameters
         var params = `${type}=${encodeURIComponent(title)}`;
         if (season) {
             params += `&s=${encodeURIComponent(season)}`;
         }
-    
-        // Full URL with query parameters
         var url = `${targetUrl}check?${params}`;
     
         GM_xmlhttpRequest({
@@ -194,15 +192,12 @@
             url: url,
             onload: function(response) {
                 if (response.status === 200) {
-                    // Successfully received response
                     alert(response.responseText);
                 } else {
-                    // Handle error response
                     alert('Sorry : ' + response.responseText);
                 }
             },
             onerror: function(error) {
-                // Handle request error
                 alert('Request failed: ' + error);
             }
         });
