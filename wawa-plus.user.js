@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.3.999
+// @version     0.4
 // @author      mctypon
 // @description Batch download & upload 1fichier links from Wawa movies, shows and animes sections in a vstream compatible format.
 // @icon        https://www.wawacity.tokyo/favicon32.png
@@ -187,7 +187,7 @@
         }
     
         // Full URL with query parameters
-        var url = `${targetUrl}/check?${params}`;
+        var url = `${targetUrl}check?${params}`;
     
         GM_xmlhttpRequest({
             method: 'GET',
@@ -195,10 +195,10 @@
             onload: function(response) {
                 if (response.status === 200) {
                     // Successfully received response
-                    alert('Data: ' + response.responseText);
+                    alert(response.responseText);
                 } else {
                     // Handle error response
-                    alert('Error: ' + response.status + ' ' + response.statusText);
+                    alert('Sorry : ' + response.responseText);
                 }
             },
             onerror: function(error) {
@@ -428,9 +428,9 @@
     
         const titleText = titleSpan.textContent.trim();
         const [category, fullTitle] = titleText.split(' » ');
-        const type = category.toLowerCase() === 'animés' ? 'a' : category.toLowerCase() === 'films' ? 'm' : 't';
+        const type = category.toLowerCase() === 'animés' ? 'a' : category.toLowerCase() === 'films' ? 'f' : 't';
     
-        if (type === "m") {
+        if (type === "f") {
             const title = fullTitle.split('[')[0].trim();
             GetData(targetUrl,type, title);
             
