@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.4
+// @version     0.5
 // @author      mctypon
 // @description Batch download & upload 1fichier links from Wawa movies, shows and animes sections in a vstream compatible format.
 // @icon        https://www.wawacity.tokyo/favicon32.png
@@ -16,6 +16,7 @@
     'use strict';
     /* UI */
     // Download Button
+    var rootBody = document.querySelector('body#am');
     var downloadButton = document.createElement("button");
     downloadButton.innerHTML = "Download";
 
@@ -44,7 +45,8 @@
         downloadButton.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
     });
 
-    document.body.appendChild(downloadButton);
+    if(rootBody)
+    rootBody.appendChild(downloadButton);
 
     // Upload button
     var uploadButton = document.createElement("button");
@@ -76,7 +78,8 @@
         uploadButton.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
     });
 
-    document.body.appendChild(uploadButton);
+    if(rootBody)
+    rootBody.appendChild(uploadButton);
 
     // Check button
     var checkButton = document.createElement("button");
@@ -108,7 +111,8 @@
         checkButton.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
     });
 
-    document.body.appendChild(checkButton);
+    if(rootBody)
+    rootBody.appendChild(checkButton);
 
     /* Helpers */
     function sleep(ms) {
@@ -354,33 +358,27 @@
             const title = fullTitle.split(' - ')[0].trim();
             const seasonElement = document.querySelector('.detail-list > li:nth-child(3) > b:nth-child(2)');
             const season = seasonElement ? seasonElement.textContent.trim() : 'Unknown';
-            let episodeLinks = [];
-            let linkRows = table.querySelectorAll("tr");
-            for (const linkRow of linkRows) {
-                if (linkRow.textContent.trim().includes("1fichier")) {
-                    const episodeLink = linkRow.querySelector('td:first-child');
-                    episodeLinks.push(episodeLink);
-                }
-            }
-    
-            let links = {};
-            let index = 1;
-            for (const episodeLink of episodeLinks) {
-                const button = episodeLink.querySelector(".btn-copy-clipboard");
-                if(button){
-                    const link = getLink(button);
-                    if (link) {
-                        links[index++] = link;
-                    } else {
-                        index++;
+            const episodeElements = table.querySelectorAll('tr.episode-title');
+            let episodeLinks= {};
+
+            for(let i=1; i <= episodeElements.length; i++){
+                let linkRow = episodeElements[i-1].nextElementSibling;
+                while (linkRow != episodeElements[i]){
+                    const linkElement = linkRow.querySelector("td:first-child>a");
+                    let link = linkElement.getAttribute("href");
+                    if (link.trim().includes("1fichier")) {
+                        const afIndex = link.indexOf('&af=');
+                        if (afIndex !== -1) {
+                            link = link.substring(0, afIndex);
+                        }
+                        episodeLinks[i] = link.replace(/\s+/g, '');
                     }
-                }else{
-                    index++;
+                    linkRow = linkRow.nextElementSibling;
                 }
-                
             }
-            if(Object.keys(links).length != 0){
-                const formattedLinks = JSON.stringify(links);
+
+            if(Object.keys(episodeLinks).length != 0){
+                const formattedLinks = JSON.stringify(episodeLinks);
                 const output = `${type};${title};${season};${formattedLinks}`;
                 console.log(output);
                 postData(output,targetUrl,type);

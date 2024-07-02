@@ -1,5 +1,5 @@
 // ==NodeJS Server==
-// @version     0.1
+// @version     2.0
 // @author      mctypon
 // @description Backend for processing uploads from user script.
 // ==/NodeJS Server==
@@ -11,10 +11,9 @@ const path = require('path');
 
 const app = express();
 const PORT = 3000;
-
 // Home route
 app.get('/', (req, res) => {
-    res.send('Server v0.1 running.');
+    res.send('Server v2 running.');
 });
 
 
@@ -111,6 +110,59 @@ app.post('/:category', (req, res) => {
     res.status(200).send(`${category} added`);
 });
 
+// Check endpoint
+app.get('/check', (req, res) => {
+    const { f, t, s, a } = req.query;
+
+    let category, title, season;
+
+    if (f) {
+        category = 'film';
+        title = f;
+    } else if (t && s) {
+        category = 'serie';
+        title = t;
+        season = s;
+    } else if (a && s) {
+        category = 'anime';
+        title = a;
+        season = s;
+    } else {
+        return res.status(400).send('Invalid query parameters');
+    }
+
+    const filePath = path.join(__dirname, `${category}.txt`);
+    const existingContent = readFile(filePath);
+    let found = false;
+    let result = {};
+
+    existingContent.split('\n').forEach(line => {
+        if (line.trim()) {
+            const data = parseContent(line);
+            if (!data) return;
+
+            if (data.cat === category && data.title === title) {
+                if (category === 'film') {
+                    found = true;
+                } else if (data.season === season) {
+                    found = true;
+                    result = data.urls;
+                }
+            }
+        }
+    });
+
+    if (found) {
+        if (category === 'film') {
+            res.status(200).send('Movie exists');
+        } else {
+            const episodes = Object.keys(result).join(', ');
+            res.status(200).send(`${title} - Season ${season} exists: Episode ${episodes}`);
+        }
+    } else {
+        res.status(404).send('Entry not found');
+    }
+});
 
 // Start the server
 app.listen(PORT, () => {
