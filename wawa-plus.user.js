@@ -3,10 +3,10 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.5
+// @version     0.6
 // @author      mctypon
 // @description Batch download & upload 1fichier links from Wawa movies, shows and animes sections in a vstream compatible format.
-// @icon        https://www.wawacity.tokyo/favicon32.png
+// @icon        https://www.wawacity.beauty/favicon32.png
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
@@ -118,7 +118,7 @@
     function sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
-    
+
     function getLink(button) {
         let link = button.getAttribute('data-href');
         if (link) {
@@ -130,7 +130,7 @@
         }
         return null;
     }
-    
+
     function downloadFile(filename, content) {
         const blob = new Blob([content], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
@@ -140,7 +140,7 @@
         a.click();
         URL.revokeObjectURL(url);
     }
-    
+
     async function handleButtonClick(button) {
         let link = button.getAttribute('data-href');
         if (link && link.includes('dl-protect')) {
@@ -149,7 +149,7 @@
             await sleep(wait * 1000);
         }
     }
-    
+
     // Server data
     function getTargetUrl() {
         return GM_getValue('targetUrl');
@@ -190,7 +190,7 @@
             params += `&s=${encodeURIComponent(season)}`;
         }
         var url = `${targetUrl}check?${params}`;
-    
+
         GM_xmlhttpRequest({
             method: 'GET',
             url: url,
@@ -209,99 +209,105 @@
 
     /* Main */
     async function clickLinks() {
-        const table = document.getElementById('DDLLinks');
-        if (!table) {
-            console.error('Table with id "DDLLinks" not found.');
+    const table = document.getElementById('DDLLinks');
+    if (!table) {
+        console.error('Table with id "DDLLinks" not found.');
+        return;
+    }
+
+    const titleSpan = document.querySelector('h1.wa-block-title > span:nth-child(1)');
+    if (!titleSpan) {
+        console.error('Title span not found.');
+        return;
+    }
+
+    const titleText = titleSpan.textContent.trim();
+    const [category, fullTitle] = titleText.split(' » ');
+    const type = category.toLowerCase() === 'animés' ? 'anime' : category.toLowerCase() === 'films' ? 'film' : 'serie';
+
+    if (type === "film") {
+        const title = fullTitle.split('[')[0].trim();
+        let linkRows = table.querySelectorAll("tr");
+
+        for (const linkRow of linkRows) {
+            if (linkRow.textContent.trim().includes("1fichier")) {
+                const movieTd = linkRow.querySelector('td:first-child');
+                let button = movieTd.querySelector('button');
+
+                await handleButtonClick(button);
+
+                button = movieTd.querySelector('button.btn-copy-clipboard');
+                const link = getLink(button);
+
+                if (link) {
+                    const output = `CAT;TITLE;SAISON;URLS\n${type};${title};;"${link}"`;
+                    console.log(output);
+                    downloadFile(`${title}.txt`, output);
+                }
+            }
+        }
+    } else {
+        const title = fullTitle.split(' - ')[0].trim();
+        const episodeRange = prompt("Enter the episode range (e.g., '1' or '1-8'):");
+        if (!episodeRange) {
+            console.error('Invalid input for episode range.');
             return;
         }
-    
-        const titleSpan = document.querySelector('h1.wa-block-title > span:nth-child(1)');
-        if (!titleSpan) {
-            console.error('Title span not found.');
-            return;
+
+        // Parse the input range
+        const [start, end] = episodeRange.split('-').map(Number);
+        const startIndex = start ? start - 1 : 0;
+        const endIndex = end ? end - 1 : null;
+
+        const seasonElement = document.querySelector('.detail-list > li:nth-child(3) > b:nth-child(2)');
+        const season = seasonElement ? seasonElement.textContent.trim() : 'Unknown';
+        const episodeRows = table.querySelectorAll('tbody > tr.title.episode-title');
+
+        let episodeLinks = [];
+        let linkRows = table.querySelectorAll("tr");
+        for (const linkRow of linkRows) {
+            if (linkRow.textContent.trim().includes("1fichier")) {
+                const episodeLink = linkRow.querySelector('td:first-child');
+                episodeLinks.push(episodeLink);
+            }
         }
-    
-        const titleText = titleSpan.textContent.trim();
-        const [category, fullTitle] = titleText.split(' » ');
-        const type = category.toLowerCase() === 'animés' ? 'anime' : category.toLowerCase() === 'films' ? 'film' : 'serie';
-    
-        if (type === "film") {
-            const title = fullTitle.split('[')[0].trim();
-            let linkRows = table.querySelectorAll("tr");
-    
-            for (const linkRow of linkRows) {
-                if (linkRow.textContent.trim().includes("1fichier")) {
-                    const movieTd = linkRow.querySelector('td:first-child');
-                    let button = movieTd.querySelector('button');
-    
-                    await handleButtonClick(button);
-    
-                    button = movieTd.querySelector('button.btn-copy-clipboard');
-                    const link = getLink(button);
-    
-                    if (link) {
-                        const output = `CAT;TITLE;SAISON;URLS\n${type};${title};;"${link}"`;
-                        console.log(output);
-                        downloadFile(`${title}.txt`, output);
-                    }
-                }
+
+        for (let i = startIndex; i < episodeLinks.length && (endIndex === null || i <= endIndex); i++) {
+            const episodeRow = episodeRows[i];
+            if (episodeRow.getAttribute("class").includes("active")) {
+                episodeRow.click();
+                await sleep(200);
             }
-        } else {
-            const title = fullTitle.split(' - ')[0].trim();
-            const startIndex = parseInt(prompt("Enter the episode number to start from:"), 10);
-            if (isNaN(startIndex) || startIndex < 1) {
-                console.error('Invalid start index.');
-                return;
+            let button = episodeLinks[i].querySelector('button');
+            if (button) {
+                await handleButtonClick(button);
             }
-            const seasonElement = document.querySelector('.detail-list > li:nth-child(3) > b:nth-child(2)');
-            const season = seasonElement ? seasonElement.textContent.trim() : 'Unknown';
-            const episodeRows = table.querySelectorAll('tbody > tr.title.episode-title');
-    
-            let episodeLinks = [];
-            let linkRows = table.querySelectorAll("tr");
-            for (const linkRow of linkRows) {
-                if (linkRow.textContent.trim().includes("1fichier")) {
-                    const episodeLink = linkRow.querySelector('td:first-child');
-                    episodeLinks.push(episodeLink);
-                }
-            }
-    
-            for (let i = startIndex - 1; i < episodeLinks.length; i++) {
-                const episodeRow = episodeRows[i];
-                if (episodeRow.getAttribute("class").includes("active")) {
-                    episodeRow.click();
-                    await sleep(200);
-                }
-                let button = episodeLinks[i].querySelector('button');
-                if (button) {
-                    await handleButtonClick(button);
-                }
-            }
-    
-            let links = {};
-            let index = 1;
-            for (const episodeLink of episodeLinks) {
-                const button = episodeLink.querySelector(".btn-copy-clipboard");
-                if(button){
-                    const link = getLink(button);
-                    if (link) {
-                        links[index++] = link;
-                    } else {
-                        index++;
-                    }
-                }else{
+        }
+
+        let links = {};
+        let index = start;
+        for (let i = startIndex; i < episodeLinks.length && (endIndex === null || i <= endIndex); i++) {
+            const button = episodeLinks[i].querySelector(".btn-copy-clipboard");
+            if (button) {
+                const link = getLink(button);
+                if (link) {
+                    links[index++] = link;
+                } else {
                     index++;
                 }
+            } else {
+                index++;
             }
-    
-            const formattedLinks = JSON.stringify(links);
-            const output = `CAT;TITLE;SAISON;URLS\n${type};${title};${season};${formattedLinks}`;
-            console.log(output);
-    
-            downloadFile(`${title} S${season}.txt`, output);
         }
+
+        const formattedLinks = JSON.stringify(links);
+        const output = `CAT;TITLE;SAISON;URLS\n${type};${title};${season};${formattedLinks}`;
+        console.log(output);
+
+        downloadFile(`${title} S${season}.txt`, output);
     }
-    
+}
+
     function extractLinks() {
         // Server URL
         let targetUrl = getTargetUrl();
@@ -324,26 +330,26 @@
             console.error('Table with id "DDLLinks" not found.');
             return;
         }
-    
+
         const titleSpan = document.querySelector('h1.wa-block-title > span:nth-child(1)');
         if (!titleSpan) {
             console.error('Title span not found.');
             return;
         }
-    
+
         const titleText = titleSpan.textContent.trim();
         const [category, fullTitle] = titleText.split(' » ');
         const type = category.toLowerCase() === 'animés' ? 'anime' : category.toLowerCase() === 'films' ? 'film' : 'serie';
-    
+
         if (type === "film") {
             const title = fullTitle.split('[')[0].trim();
             let linkRows = table.querySelectorAll("tr");
-    
+
             for (const linkRow of linkRows) {
                 if (linkRow.textContent.trim().includes("1fichier")) {
                     const movieTd = linkRow.querySelector('td:first-child');
                     const button = movieTd.querySelector('button.btn-copy-clipboard');
-    
+
                     if (button) {
                         const link = getLink(button);
                         const output = `${type};${title};;"${link}"`;
@@ -385,7 +391,7 @@
             }else{
                 alert("Click on Download button first !")
             }
-            
+
         }
     }
 
@@ -412,28 +418,28 @@
             console.error('Table with id "DDLLinks" not found.');
             return;
         }
-    
+
         const titleSpan = document.querySelector('h1.wa-block-title > span:nth-child(1)');
         if (!titleSpan) {
             console.error('Title span not found.');
             return;
         }
-    
+
         const titleText = titleSpan.textContent.trim();
         const [category, fullTitle] = titleText.split(' » ');
         const type = category.toLowerCase() === 'animés' ? 'a' : category.toLowerCase() === 'films' ? 'f' : 't';
-    
+
         if (type === "f") {
             const title = fullTitle.split('[')[0].trim();
             GetData(targetUrl,type, title);
-            
+
         } else {
             const title = fullTitle.split(' - ')[0].trim();
             const seasonElement = document.querySelector('.detail-list > li:nth-child(3) > b:nth-child(2)');
             const season = seasonElement ? seasonElement.textContent.trim() : 'Unknown';
             GetData(targetUrl,type,title,season);
-           
-            
+
+
         }
     }
 
