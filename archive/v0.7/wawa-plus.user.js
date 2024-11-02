@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.8
+// @version     0.7
 // @author      mctypon
 // @description Batch download & upload 1fichier links from Wawa movies, shows and animes sections in a vstream compatible format.
 // @icon        https://www.wawacity.beauty/favicon32.png
@@ -15,47 +15,10 @@
 // ==/UserScript==
 (function() {
     'use strict';
-    /* Menu */
-    // Create a notification container
-    function createNotificationContainer() {
-        const notificationContainer = document.createElement('div');
-        notificationContainer.id = 'notification-container';
-        notificationContainer.style.position = 'fixed';
-        notificationContainer.style.bottom = '20px';   // Position it at the bottom
-        notificationContainer.style.right = '20px';    // Align it to the right
-        notificationContainer.style.padding = '12px 24px';
-        notificationContainer.style.backgroundColor = '#4CAF50';  // Green color for validation
-        notificationContainer.style.color = '#fff';
-        notificationContainer.style.fontSize = '14px';
-        notificationContainer.style.borderRadius = '8px';
-        notificationContainer.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
-        notificationContainer.style.opacity = '0';
-        notificationContainer.style.transition = 'opacity 0.4s, transform 0.4s';
-        notificationContainer.style.transform = 'translateY(20px)';
-        document.body.appendChild(notificationContainer);
-        return notificationContainer;
-    }
-
-    const notificationContainer = createNotificationContainer();
-
-    // Show a notification message
-    function showNotification(message) {
-        notificationContainer.textContent = message;
-        notificationContainer.style.opacity = '1';
-        notificationContainer.style.transform = 'translateY(0)';
-
-        // Hide the notification after 2 seconds
-        setTimeout(() => {
-            notificationContainer.style.opacity = '0';
-            notificationContainer.style.transform = 'translateY(20px)';
-        }, 2000);
-    }
-
-    let currentHost = GM_getValue("host", "1fichier");
+    // Menu
     function setOption(host) {
         GM_setValue("host",host);
-        showNotification(`Selected host: ${host}`);
-        currentHost = GM_getValue("host");
+        //alert(`Selected host: ${host}`);
         updateMenu();
     }
     function updateMenu() {
@@ -63,7 +26,7 @@
         GM_registerMenuCommand("Select host : Rapidgator", () => setOption("Rapidgator"));
     }
     updateMenu();
-    
+    let currentHost = GM_getValue("host", "1fichier");
     /* UI */
     // Download Button
     var rootBody = document.querySelector('body#am');
@@ -261,133 +224,104 @@
 
     /* Main */
     async function clickLinks() {
-        const table = document.getElementById('DDLLinks');
-        if (!table) {
-            console.error('Table with id "DDLLinks" not found.');
+    const table = document.getElementById('DDLLinks');
+    if (!table) {
+        console.error('Table with id "DDLLinks" not found.');
+        return;
+    }
+
+    const titleSpan = document.querySelector('h1.wa-block-title > span:nth-child(1)');
+    if (!titleSpan) {
+        console.error('Title span not found.');
+        return;
+    }
+
+    const titleText = titleSpan.textContent.trim();
+    const [category, fullTitle] = titleText.split(' » ');
+    const type = category.toLowerCase() === 'animés' ? 'anime' : category.toLowerCase() === 'films' ? 'film' : 'serie';
+
+    if (type === "film") {
+        const title = fullTitle.split('[')[0].trim();
+        let linkRows = table.querySelectorAll("tr");
+
+        for (const linkRow of linkRows) {
+            if (linkRow.textContent.trim().toLowerCase().includes(currentHost.toLowerCase())) {
+                const movieTd = linkRow.querySelector('td:first-child');
+                let button = movieTd.querySelector('button');
+
+                await handleButtonClick(button);
+
+                button = movieTd.querySelector('button.btn-copy-clipboard');
+                const link = getLink(button);
+
+                if (link) {
+                    const output = `CAT;TITLE;SAISON;URLS\n${type};${title};;"${link}"`;
+                    console.log(output);
+                    downloadFile(`${title}.txt`, output);
+                }
+            }
+        }
+    } else {
+        const title = fullTitle.split(' - ')[0].trim();
+        const episodeRange = prompt("Enter the episode range (e.g., '1' or '1-8'):");
+        if (!episodeRange) {
+            console.error('Invalid input for episode range.');
             return;
         }
-        const titleSpan = document.querySelector('h1.wa-block-title > span:nth-child(1)');
-        if (!titleSpan) {
-            console.error('Title span not found.');
-            return;
+
+        // Parse the input range
+        const [start, end] = episodeRange.split('-').map(Number);
+        const startIndex = start ? start - 1 : 0;
+        const endIndex = end ? end - 1 : null;
+
+        const seasonElement = document.querySelector('.detail-list > li:nth-child(3) > b:nth-child(2)');
+        const season = seasonElement ? seasonElement.textContent.trim() : 'Unknown';
+        const episodeRows = table.querySelectorAll('tbody > tr.title.episode-title');
+
+        let episodeLinks = [];
+        let linkRows = table.querySelectorAll("tr");
+        for (const linkRow of linkRows) {
+            if (linkRow.textContent.trim().toLowerCase().includes(currentHost.toLowerCase())) {
+                const episodeLink = linkRow.querySelector('td:first-child');
+                episodeLinks.push(episodeLink);
+            }
         }
-        const titleText = titleSpan.textContent.trim();
-        const [category, fullTitle] = titleText.split(' » ');
-        const type = category.toLowerCase() === 'animés' ? 'anime' : category.toLowerCase() === 'films' ? 'film' : 'serie';
-    
-        if (type === "film") {
-            const title = fullTitle.split('[')[0].trim();
-            let linkRows = table.querySelectorAll("tr");
-            
-            for (const linkRow of linkRows) {
-                if (linkRow.textContent.trim().toLowerCase().includes(currentHost.toLowerCase())) {
-                    const movieTd = linkRow.querySelector('td:first-child');
-                    let button = movieTd.querySelector('button');
-                    await handleButtonClick(button);
-                    button = movieTd.querySelector('button.btn-copy-clipboard');
-                    const link = getLink(button);
-                    if (link) {
-                        const output = `CAT;TITLE;SAISON;URLS\n${type};${title};;"${link}"`;
-                        console.log(output);
-                        downloadFile(`${title}.txt`, output);
-                    }
-                    break;
-                }
+
+        for (let i = startIndex; i < episodeLinks.length && (endIndex === null || i <= endIndex); i++) {
+            const episodeRow = episodeRows[i];
+            if (episodeRow.getAttribute("class").includes("active")) {
+                episodeRow.click();
+                await sleep(200);
             }
-        } else {
-            const title = fullTitle.split(' - ')[0].trim();
-            const episodeRange = prompt("Enter the episode range (e.g., '1' or '1-8'):");
-            if (!episodeRange) {
-                console.error('Invalid input for episode range.');
-                return;
+            let button = episodeLinks[i].querySelector('button');
+            if (button) {
+                await handleButtonClick(button);
             }
-            
-            const [start, end] = episodeRange.split('-').map(Number);
-            const startIndex = start ? start - 1 : 0;
-            const endIndex = end ? end - 1 : null;
-            const seasonElement = document.querySelector('.detail-list > li:nth-child(3) > b:nth-child(2)');
-            const season = seasonElement ? seasonElement.textContent.trim() : 'Unknown';
-            
-            // Get all episode title rows and link rows
-            const rows = Array.from(table.querySelectorAll('tbody > tr'));
-            const episodeLinks = [];
-            let currentEpisodeLinks = [];
-            let isCollectingLinks = false;
-    
-            // Process rows to group links by episode
-            for (let i = 0; i < rows.length; i++) {
-                const row = rows[i];
-                
-                if (row.classList.contains('episode-title')) {
-                    // If we were collecting links and find a new episode title
-                    if (isCollectingLinks && currentEpisodeLinks.length > 0) {
-                        // Find the first link with currentHost and add it to episodeLinks
-                        const firstHostLink = currentEpisodeLinks.find(link => 
-                            link.textContent.trim().toLowerCase().includes(currentHost.toLowerCase())
-                        );
-                        if (firstHostLink) {
-                            episodeLinks.push(firstHostLink.querySelector('td:first-child'));
-                        }
-                    }
-                    // Start collecting links for new episode
-                    currentEpisodeLinks = [];
-                    isCollectingLinks = true;
-                } else if (isCollectingLinks && row.classList.contains('link-row')) {
-                    currentEpisodeLinks.push(row);
-                }
-            }
-            
-            // Handle the last episode's links
-            if (currentEpisodeLinks.length > 0) {
-                const firstHostLink = currentEpisodeLinks.find(link => 
-                    link.textContent.trim().toLowerCase().includes(currentHost.toLowerCase())
-                );
-                if (firstHostLink) {
-                    episodeLinks.push(firstHostLink.querySelector('td:first-child'));
-                }
-            }
-    
-            // Process the selected links within the specified range
-            for (let i = startIndex; i < episodeLinks.length && (endIndex === null || i <= endIndex); i++) {
-                const episodeRow = rows.find(row => 
-                    row.classList.contains('episode-title') && 
-                    row.textContent.includes(`Épisode ${i + 1}`)
-                );
-                
-                if (episodeRow && episodeRow.classList.contains('active')) {
-                    episodeRow.click();
-                    await sleep(200);
-                }
-                
-                let button = episodeLinks[i]?.querySelector('button');
-                if (button) {
-                    await handleButtonClick(button);
-                }
-            }
-    
-            // Collect links for output
-            let links = {};
-            let index = start;
-            for (let i = startIndex; i < episodeLinks.length && (endIndex === null || i <= endIndex); i++) {
-                const button = episodeLinks[i]?.querySelector(".btn-copy-clipboard");
-                if (button) {
-                    const link = getLink(button);
-                    if (link) {
-                        links[index++] = link;
-                    } else {
-                        index++;
-                    }
+        }
+
+        let links = {};
+        let index = start;
+        for (let i = startIndex; i < episodeLinks.length && (endIndex === null || i <= endIndex); i++) {
+            const button = episodeLinks[i].querySelector(".btn-copy-clipboard");
+            if (button) {
+                const link = getLink(button);
+                if (link) {
+                    links[index++] = link;
                 } else {
                     index++;
                 }
+            } else {
+                index++;
             }
-    
-            const formattedLinks = JSON.stringify(links);
-            const output = `CAT;TITLE;SAISON;URLS\n${type};${title};${season};${formattedLinks}`;
-            console.log(output);
-            downloadFile(`${title} S${season}.txt`, output);
         }
+
+        const formattedLinks = JSON.stringify(links);
+        const output = `CAT;TITLE;SAISON;URLS\n${type};${title};${season};${formattedLinks}`;
+        console.log(output);
+
+        downloadFile(`${title} S${season}.txt`, output);
     }
+}
 
     function extractLinks() {
         // Server URL
