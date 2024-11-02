@@ -3,30 +3,17 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.wawacity.*/*&id=*
 // @grant       none
-// @version     0.7
+// @version     0.6
 // @author      mctypon
 // @description Batch download & upload 1fichier links from Wawa movies, shows and animes sections in a vstream compatible format.
 // @icon        https://www.wawacity.beauty/favicon32.png
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
-// @grant       GM_registerMenuCommand
 // @updateURL   https://raw.githubusercontent.com/mctypon/wawa/main/wawa-plus.user.js
 // ==/UserScript==
 (function() {
     'use strict';
-    // Menu
-    function setOption(host) {
-        GM_setValue("host",host);
-        //alert(`Selected host: ${host}`);
-        updateMenu();
-    }
-    function updateMenu() {
-        GM_registerMenuCommand("Select host : 1fichier", () => setOption("1fichier"));
-        GM_registerMenuCommand("Select host : Rapidgator", () => setOption("Rapidgator"));
-    }
-    updateMenu();
-    let currentHost = GM_getValue("host", "1fichier");
     /* UI */
     // Download Button
     var rootBody = document.querySelector('body#am');
@@ -135,13 +122,11 @@
     function getLink(button) {
         let link = button.getAttribute('data-href');
         if (link) {
-          if(link.includes("1fichier")){
             const afIndex = link.indexOf('&af=');
             if (afIndex !== -1) {
                 link = link.substring(0, afIndex);
             }
-          }
-          return link.replace(/\s+/g, '');
+            return link.replace(/\s+/g, '');
         }
         return null;
     }
@@ -245,7 +230,7 @@
         let linkRows = table.querySelectorAll("tr");
 
         for (const linkRow of linkRows) {
-            if (linkRow.textContent.trim().toLowerCase().includes(currentHost.toLowerCase())) {
+            if (linkRow.textContent.trim().includes("1fichier")) {
                 const movieTd = linkRow.querySelector('td:first-child');
                 let button = movieTd.querySelector('button');
 
@@ -281,7 +266,7 @@
         let episodeLinks = [];
         let linkRows = table.querySelectorAll("tr");
         for (const linkRow of linkRows) {
-            if (linkRow.textContent.trim().toLowerCase().includes(currentHost.toLowerCase())) {
+            if (linkRow.textContent.trim().includes("1fichier")) {
                 const episodeLink = linkRow.querySelector('td:first-child');
                 episodeLinks.push(episodeLink);
             }
@@ -361,7 +346,7 @@
             let linkRows = table.querySelectorAll("tr");
 
             for (const linkRow of linkRows) {
-                if (linkRow.textContent.trim().toLowerCase().includes(currentHost.toLowerCase())) {
+                if (linkRow.textContent.trim().includes("1fichier")) {
                     const movieTd = linkRow.querySelector('td:first-child');
                     const button = movieTd.querySelector('button.btn-copy-clipboard');
 
@@ -387,12 +372,10 @@
                 while (linkRow != episodeElements[i]){
                     const linkElement = linkRow.querySelector("td:first-child>a");
                     let link = linkElement.getAttribute("href");
-                    if (link.trim().toLowerCase().includes(currentHost.toLowerCase())) {
-                        if( currentHost == "1fichier"){
-                         const afIndex = link.indexOf('&af=');
-                         if (afIndex !== -1) {
+                    if (link.trim().includes("1fichier")) {
+                        const afIndex = link.indexOf('&af=');
+                        if (afIndex !== -1) {
                             link = link.substring(0, afIndex);
-                         }
                         }
                         episodeLinks[i] = link.replace(/\s+/g, '');
                     }
